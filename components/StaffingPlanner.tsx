@@ -14,7 +14,7 @@ const locations = [
   { id: 'WA', name: 'Warren', code: 'C01142' }
 ];
 
-const staffTypes = ['Server', 'Bartender', 'Host', 'Busser', 'Runner', 'Togo', 'QA'];
+const staffTypes = ['Server', 'Bartender', 'Host', 'Busser', 'Runner', 'Togo', 'QA', 'Cook', 'Dishwasher', 'Night Cleaner'];
 const daysOfWeek = ['Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun'];
 
 const staffTypeConfig: Record<string, { divisor: number }> = {
@@ -24,7 +24,10 @@ const staffTypeConfig: Record<string, { divisor: number }> = {
   Busser: { divisor: 4.0 },
   Runner: { divisor: 4.0 },
   Togo: { divisor: 4.0 },
-  QA: { divisor: 4.0 }
+  QA: { divisor: 4.0 },
+  Cook: { divisor: 4.0 },
+  Dishwasher: { divisor: 4.0 },
+  'Night Cleaner': { divisor: 4.5 }
 };
 
 const initialShiftState = {
