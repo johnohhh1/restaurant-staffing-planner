@@ -59,7 +59,12 @@ const StaffingPlanner: FC = () => {
   useEffect(() => {
     const savedState = loadAppState();
     if (savedState) {
-      setStaffing(savedState.staffing);
+      // Merge saved state with initial state to include any new roles
+      const mergedStaffing = {
+        ...initialStaffingState,
+        ...savedState.staffing
+      };
+      setStaffing(mergedStaffing);
       setVolume(savedState.volume);
     }
   }, []);
