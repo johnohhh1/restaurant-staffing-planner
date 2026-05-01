@@ -198,23 +198,259 @@ const StaffingPlanner: FC = () => {
   };
 
   const exportToCSV = () => {
-    let csvContent = "Location,Role,Day,Lunch Shifts,Dinner Shifts,Total Shifts,Staff On Hand,Staffing Needs,Hiring Needs\n";
-
-    Object.entries(staffing).forEach(([role, data]) => {
-      Object.entries(data.shifts).forEach(([day, shifts]) => {
-        csvContent += `${selectedLocation.name},${role},${day},${shifts.lunch},${shifts.dinner},${data.totalShifts},${data.onHand},${data.staffingNeeds},${data.hiringNeeds}\n`;
-      });
+    const volume = forecast / baseline;
+    const reportDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `staffing-needs-${selectedLocation.id}-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    const tableRows = staffTypes.map(role => {
+      const data = staffing[role];
+      const shiftsHtml = daysOfWeek.map(day =>
+        `<td>${data.shifts[day].lunch}</td><td>${data.shifts[day].dinner}</td>`
+      ).join('');
+
+      const hireStatus = data.hiringNeeds > 0
+        ? `<span style="color: #d32f2f; font-weight: bold;">${data.hiringNeeds.toFixed(1)}</span>`
+        : `<span style="color: #2e7d32; font-weight: bold;">✓</span>`;
+
+      return `
+        <tr>
+          <td style="font-weight: bold;">${role}</td>
+          ${shiftsHtml}
+          <td style="font-weight: bold;">${data.totalShifts}</td>
+          <td>${data.onHand}</td>
+          <td style="color: #1976d2; font-weight: bold;">${data.staffingNeeds.toFixed(1)}</td>
+          <td>${hireStatus}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const reportHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Woods Area Staffing Report - ${selectedLocation.name}</title>
+    <style>
+        @media print {
+            body { margin: 0; padding: 20px; }
+            .no-print { display: none; }
+            @page { margin: 0.5in; }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background: #f5f5f5;
+        }
+        .report {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #1976d2;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #1976d2;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 18px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #1976d2;
+        }
+        .info-card label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .info-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .summary-card {
+            text-align: center;
+            padding: 25px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        .summary-card.needed { background: #e3f2fd; border-color: #2196F3; }
+        .summary-card.onhand { background: #e8f5e9; border-color: #4CAF50; }
+        .summary-card.hire { background: #ffebee; border-color: #f44336; }
+        .summary-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .summary-card.needed .number { color: #1976d2; }
+        .summary-card.onhand .number { color: #2e7d32; }
+        .summary-card.hire .number { color: #c62828; }
+        .summary-card .label {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 11px;
+        }
+        th {
+            background: #1976d2;
+            color: white;
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 8px 6px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:hover { background: #f5f5f5; }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            color: #666;
+            font-size: 12px;
+        }
+        .print-btn {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        .print-btn:hover { background: #115293; }
+    </style>
+</head>
+<body>
+    <div class="report">
+        <div class="header">
+            <h1>📊 Woods Area Staffing Report</h1>
+            <div class="subtitle">${selectedLocation.name} (${selectedLocation.code})</div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <label>Report Date</label>
+                <div class="value">${reportDate}</div>
+            </div>
+            <div class="info-card">
+                <label>Baseline Sales</label>
+                <div class="value">$${baseline.toLocaleString()}</div>
+            </div>
+            <div class="info-card">
+                <label>Forecasted Sales</label>
+                <div class="value">$${forecast.toLocaleString()}</div>
+            </div>
+            <div class="info-card">
+                <label>Volume Ratio</label>
+                <div class="value">${Math.round(volume * 100)}%</div>
+            </div>
+        </div>
+
+        <h2 style="margin: 30px 0 20px 0; color: #333;">Executive Summary</h2>
+        <div class="summary">
+            <div class="summary-card needed">
+                <div class="number">${getTotalStaffingNeeds().toFixed(1)}</div>
+                <div class="label">Total Staff Needed</div>
+            </div>
+            <div class="summary-card onhand">
+                <div class="number">${getTotalOnHand()}</div>
+                <div class="label">Current Staff</div>
+            </div>
+            <div class="summary-card hire">
+                <div class="number">${getTotalHiringNeeds() > 0 ? getTotalHiringNeeds().toFixed(1) : '✓'}</div>
+                <div class="label">${getTotalHiringNeeds() > 0 ? 'Need to Hire' : 'Fully Staffed'}</div>
+            </div>
+        </div>
+
+        <h2 style="margin: 30px 0 20px 0; color: #333;">Detailed Staffing Plan</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2">Position</th>
+                    <th colspan="2">Mon</th>
+                    <th colspan="2">Tue</th>
+                    <th colspan="2">Wed</th>
+                    <th colspan="2">Thu</th>
+                    <th colspan="2">Fri</th>
+                    <th colspan="2">Sat</th>
+                    <th colspan="2">Sun</th>
+                    <th rowspan="2">Total</th>
+                    <th rowspan="2">On Hand</th>
+                    <th rowspan="2">Needed</th>
+                    <th rowspan="2">To Hire</th>
+                </tr>
+                <tr>
+                    <th>L</th><th>D</th>
+                    <th>L</th><th>D</th>
+                    <th>L</th><th>D</th>
+                    <th>L</th><th>D</th>
+                    <th>L</th><th>D</th>
+                    <th>L</th><th>D</th>
+                    <th>L</th><th>D</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <strong>Woods Area Staffing Planner</strong><br>
+            Copyright © 2026 John Olenski • <a href="https://johnohhh1.dev" target="_blank" style="color: #1976d2;">johnohhh1.dev</a><br>
+            <span style="font-size: 10px; opacity: 0.7;">For authorized use only. Redistribution prohibited without permission.</span>
+        </div>
+
+        <div style="text-align: center;" class="no-print">
+            <button class="print-btn" onclick="window.print()">🖨️ Print Report</button>
+            <button class="print-btn" style="background: #666;" onclick="window.close()">Close</button>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+
+    const reportWindow = window.open('', '_blank');
+    if (reportWindow) {
+      reportWindow.document.write(reportHTML);
+      reportWindow.document.close();
+    }
   };
 
   const getTotalStaffingNeeds = () => {
@@ -290,7 +526,7 @@ const StaffingPlanner: FC = () => {
                   startIcon={<FileDownload />}
                   onClick={exportToCSV}
                 >
-                  Export Data
+                  Generate Report
                 </Button>
               </Grid>
             </Grid>
