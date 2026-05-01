@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales-Driven Staffing Calculator - Chili's</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #252d3d;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --border: #3d4556;
+            --accent: #4a9eff;
+            --success: #34a853;
+            --warning: #fbbc04;
+            --danger: #ea4335;
+            --hover: #2d3548;
+        }
+
+        body.light-mode {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --border: #dadce0;
+            --hover: #f1f3f4;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .location-info {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .card-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .success { color: var(--success); }
+        .warning { color: var(--warning); }
+        .danger { color: var(--danger); }
+
+        .input-section {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .table-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-card);
+            position: sticky;
+            top: 0;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: var(--hover);
+        }
+
+        .position-name {
+            font-weight: 600;
+        }
+
+        .category-header {
+            background: var(--bg-card);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .category-total {
+            background: var(--bg-card);
+            font-weight: 700;
+            border-top: 2px solid var(--border);
+        }
+
+        .editable-cell {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 6px 8px;
+            border-radius: 4px;
+            width: 80px;
+            text-align: right;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-optimal {
+            background: rgba(52, 168, 83, 0.2);
+            color: var(--success);
+        }
+
+        .status-over {
+            background: rgba(234, 67, 53, 0.2);
+            color: var(--danger);
+        }
+
+        .status-under {
+            background: rgba(251, 188, 4, 0.2);
+            color: var(--warning);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>🎯 Sales-Driven Staffing Calculator</h1>
+                <div class="location-info">Chili's Auburn Hills (605) • Week of <span id="weekDate"></span></div>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">☀️ Toggle Light Mode</button>
+        </header>
+
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-label">Weekly Sales</div>
+                <div class="card-value" id="totalSales">$0</div>
+                <div class="card-subtitle">Projected Revenue</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Labor Cost</div>
+                <div class="card-value" id="totalLaborCost">$0</div>
+                <div class="card-subtitle"><span id="totalLaborPercent">0%</span> of sales</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Hours</div>
+                <div class="card-value" id="totalHours">0</div>
+                <div class="card-subtitle">Scheduled this week</div>
+            </div>
+            <div class="card">
+                <div class="card-label">SPLH</div>
+                <div class="card-value" id="overallSPLH">$0</div>
+                <div class="card-subtitle">Sales Per Labor Hour</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Status</div>
+                <div class="card-value" id="budgetStatus">-</div>
+                <div class="card-subtitle">Budget Health</div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <div class="section-title">📊 Sales Forecast & Labor Targets</div>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Weekly Sales Projection</label>
+                    <input type="number" id="weeklySales" value="117100" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>FOH Labor % Target</label>
+                    <input type="number" step="0.1" id="fohTarget" value="8.5" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>HOH Labor % Target</label>
+                    <input type="number" step="0.1" id="hohTarget" value="9.6" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Volume Multiplier</label>
+                    <input type="number" step="0.05" id="volumeMultiplier" value="1.0" onchange="calculate()">
+                    <div class="help-text">1.0 = normal, 1.2 = busy, 0.8 = slow</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Avg Wage</th>
+                        <th>Target SPLH</th>
+                        <th>Optimal Hrs</th>
+                        <th>Scheduled Hrs</th>
+                        <th>Labor Cost</th>
+                        <th>Actual SPLH</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="staffingTable">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Position data based on HotSchedules reports
+        const positions = {
+            FOH: [
+                { name: 'Bartender 1', wage: 5.67, targetSPLH: 1540, baseHours: 76 },
+                { name: 'Bartender 2', wage: 5.49, targetSPLH: 4182, baseHours: 28 },
+                { name: 'Busser 1', wage: 5.49, targetSPLH: 2440, baseHours: 48 },
+                { name: 'Busser 2', wage: 16.00, targetSPLH: 1446, baseHours: 81 },
+                { name: 'FOH Expeditor', wage: 21.00, targetSPLH: 2169, baseHours: 54 },
+                { name: 'Food Runner', wage: 5.35, targetSPLH: 527, baseHours: 222 },
+                { name: 'Server 1', wage: 5.49, targetSPLH: 301, baseHours: 389 },
+                { name: 'Server 2', wage: 5.49, targetSPLH: 5576, baseHours: 21 },
+                { name: 'Host', wage: 15.80, targetSPLH: 1220, baseHours: 96 },
+                { name: 'To-Go', wage: 16.17, targetSPLH: 1154, baseHours: 101.5 }
+            ],
+            HOH: [
+                { name: 'Cook', wage: 21.09, targetSPLH: 254, baseHours: 461.5 },
+                { name: 'Dishwasher', wage: 18.82, targetSPLH: 1748, baseHours: 67 },
+                { name: 'BOH Trainee', wage: 13.73, targetSPLH: 7807, baseHours: 15 }
+            ]
+        };
+
+        function formatCurrency(amount) {
+            return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function formatPercent(value) {
+            return value.toFixed(1) + '%';
+        }
+
+        function getStatus(scheduled, optimal) {
+            const diff = Math.abs(scheduled - optimal);
+            const percentDiff = (diff / optimal) * 100;
+
+            if (percentDiff < 5) return { class: 'optimal', text: '✓ Optimal' };
+            if (scheduled > optimal) return { class: 'over', text: `+${diff.toFixed(0)} hrs` };
+            return { class: 'under', text: `-${diff.toFixed(0)} hrs` };
+        }
+
+        function calculate() {
+            const weeklySales = parseFloat(document.getElementById('weeklySales').value) || 0;
+            const fohTarget = parseFloat(document.getElementById('fohTarget').value) / 100 || 0.085;
+            const hohTarget = parseFloat(document.getElementById('hohTarget').value) / 100 || 0.096;
+            const volumeMult = parseFloat(document.getElementById('volumeMultiplier').value) || 1.0;
+
+            const fohBudget = weeklySales * fohTarget;
+            const hohBudget = weeklySales * hohTarget;
+
+            let fohHours = 0, fohCost = 0, hohHours = 0, hohCost = 0;
+            const tbody = document.getElementById('staffingTable');
+            tbody.innerHTML = '';
+
+            // FOH Section
+            tbody.innerHTML += `<tr class="category-header"><td colspan="8">FRONT OF HOUSE</td></tr>`;
+
+            positions.FOH.forEach(pos => {
+                const optimalHours = (weeklySales / pos.targetSPLH) * volumeMult;
+                const scheduledHours = pos.baseHours * volumeMult;
+                const laborCost = scheduledHours * pos.wage;
+                const actualSPLH = weeklySales / scheduledHours;
+                const status = getStatus(scheduledHours, optimalHours);
+
+                fohHours += scheduledHours;
+                fohCost += laborCost;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="position-name">${pos.name}</td>
+                        <td>${formatCurrency(pos.wage)}/hr</td>
+                        <td>${formatCurrency(pos.targetSPLH)}</td>
+                        <td>${optimalHours.toFixed(1)}</td>
+                        <td><input type="number" class="editable-cell" value="${scheduledHours.toFixed(1)}"
+                            onchange="updateScheduled('${pos.name}', this.value)"></td>
+                        <td>${formatCurrency(laborCost)}</td>
+                        <td>${formatCurrency(actualSPLH)}</td>
+                        <td><span class="status-badge status-${status.class}">${status.text}</span></td>
+                    </tr>
+                `;
+            });
+
+            const fohPercent = (fohCost / weeklySales) * 100;
+            tbody.innerHTML += `
+                <tr class="category-total">
+                    <td><strong>FOH Total</strong></td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td><strong>${(weeklySales / fohTarget / 1).toFixed(0)}</strong></td>
+                    <td><strong>${fohHours.toFixed(1)}</strong></td>
+                    <td><strong>${formatCurrency(fohCost)}</strong></td>
+                    <td><strong>${formatCurrency(weeklySales / fohHours)}</strong></td>
+                    <td><strong>${formatPercent(fohPercent)}</strong></td>
+                </tr>
+            `;
+
+            // HOH Section
+            tbody.innerHTML += `<tr class="category-header"><td colspan="8">HEART OF HOUSE</td></tr>`;
+
+            positions.HOH.forEach(pos => {
+                const optimalHours = (weeklySales / pos.targetSPLH) * volumeMult;
+                const scheduledHours = pos.baseHours * volumeMult;
+                const laborCost = scheduledHours * pos.wage;
+                const actualSPLH = weeklySales / scheduledHours;
+                const status = getStatus(scheduledHours, optimalHours);
+
+                hohHours += scheduledHours;
+                hohCost += laborCost;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="position-name">${pos.name}</td>
+                        <td>${formatCurrency(pos.wage)}/hr</td>
+                        <td>${formatCurrency(pos.targetSPLH)}</td>
+                        <td>${optimalHours.toFixed(1)}</td>
+                        <td><input type="number" class="editable-cell" value="${scheduledHours.toFixed(1)}"
+                            onchange="updateScheduled('${pos.name}', this.value)"></td>
+                        <td>${formatCurrency(laborCost)}</td>
+                        <td>${formatCurrency(actualSPLH)}</td>
+                        <td><span class="status-badge status-${status.class}">${status.text}</span></td>
+                    </tr>
+                `;
+            });
+
+            const hohPercent = (hohCost / weeklySales) * 100;
+            tbody.innerHTML += `
+                <tr class="category-total">
+                    <td><strong>HOH Total</strong></td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td><strong>${(weeklySales / hohTarget / 1).toFixed(0)}</strong></td>
+                    <td><strong>${hohHours.toFixed(1)}</strong></td>
+                    <td><strong>${formatCurrency(hohCost)}</strong></td>
+                    <td><strong>${formatCurrency(weeklySales / hohHours)}</strong></td>
+                    <td><strong>${formatPercent(hohPercent)}</strong></td>
+                </tr>
+            `;
+
+            // Grand Total
+            const totalHours = fohHours + hohHours;
+            const totalCost = fohCost + hohCost;
+            const totalPercent = (totalCost / weeklySales) * 100;
+            const overallSPLH = weeklySales / totalHours;
+
+            tbody.innerHTML += `
+                <tr class="category-total" style="background: var(--accent); color: white;">
+                    <td><strong>GRAND TOTAL</strong></td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td><strong>${totalHours.toFixed(1)}</strong></td>
+                    <td><strong>${formatCurrency(totalCost)}</strong></td>
+                    <td><strong>${formatCurrency(overallSPLH)}</strong></td>
+                    <td><strong>${formatPercent(totalPercent)}</strong></td>
+                </tr>
+            `;
+
+            // Update summary cards
+            document.getElementById('totalSales').textContent = formatCurrency(weeklySales);
+            document.getElementById('totalLaborCost').textContent = formatCurrency(totalCost);
+            document.getElementById('totalLaborPercent').textContent = formatPercent(totalPercent);
+            document.getElementById('totalHours').textContent = totalHours.toFixed(1);
+            document.getElementById('overallSPLH').textContent = formatCurrency(overallSPLH);
+
+            // Budget status
+            const targetPercent = ((fohTarget + hohTarget) / 2) * 100;
+            let statusHTML = '';
+            if (totalPercent < targetPercent * 0.95) {
+                statusHTML = '<span class="success">✓ Under Budget</span>';
+            } else if (totalPercent > targetPercent * 1.05) {
+                statusHTML = '<span class="danger">⚠ Over Budget</span>';
+            } else {
+                statusHTML = '<span class="warning">→ On Target</span>';
+            }
+            document.getElementById('budgetStatus').innerHTML = statusHTML;
+        }
+
+        function updateScheduled(posName, hours) {
+            // Find and update the position's base hours
+            for (let category in positions) {
+                const pos = positions[category].find(p => p.name === posName);
+                if (pos) {
+                    const volumeMult = parseFloat(document.getElementById('volumeMultiplier').value) || 1.0;
+                    pos.baseHours = parseFloat(hours) / volumeMult;
+                    calculate();
+                    break;
+                }
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const btn = document.querySelector('.theme-toggle');
+            btn.textContent = document.body.classList.contains('light-mode') ? '🌙 Toggle Dark Mode' : '☀️ Toggle Light Mode';
+        }
+
+        // Set current week
+        function setWeekDate() {
+            const today = new Date();
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            document.getElementById('weekDate').textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        // Initialize
+        setWeekDate();
+        calculate();
+    </script>
+</body>
+</html>
