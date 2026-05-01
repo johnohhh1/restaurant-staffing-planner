@@ -55,7 +55,8 @@ const initialStaffingState: StaffingState = Object.fromEntries(
 const StaffingPlanner: FC = () => {
   const [staffing, setStaffing] = React.useState<StaffingState>(initialStaffingState);
   const [selectedLocation, setSelectedLocation] = React.useState(locations[0]);
-  const [volume, setVolume] = React.useState(100);
+  const [baseline, setBaseline] = React.useState(100000);
+  const [forecast, setForecast] = React.useState(100000);
   const [darkMode, setDarkMode] = React.useState(true);
 
   const theme = createTheme({
@@ -79,13 +80,14 @@ const StaffingPlanner: FC = () => {
         ...savedState.staffing
       };
       setStaffing(mergedStaffing);
-      setVolume(savedState.volume);
+      setBaseline(savedState.baseline || 100000);
+      setForecast(savedState.forecast || 100000);
     }
   }, []);
 
   useEffect(() => {
-    saveAppState({ staffing, volume });
-  }, [staffing, volume]);
+    saveAppState({ staffing, baseline, forecast } as any);
+  }, [staffing, baseline, forecast]);
 
   const calculateMetrics = (
     role: string,
@@ -125,7 +127,7 @@ const StaffingPlanner: FC = () => {
       role,
       newStaffing[role].shifts,
       newStaffing[role].onHand,
-      volume / 100
+      forecast / baseline
     );
 
     newStaffing[role] = {
@@ -152,7 +154,7 @@ const StaffingPlanner: FC = () => {
       role,
       newStaffing[role].shifts,
       numValue,
-      volume / 100
+      forecast / baseline
     );
 
     newStaffing[role] = {
@@ -163,8 +165,12 @@ const StaffingPlanner: FC = () => {
     setStaffing(newStaffing);
   };
 
-  const handleVolumeChange = (newVolume: number) => {
-    setVolume(newVolume);
+  const handleForecastChange = (newBaseline?: number, newForecast?: number) => {
+    const base = newBaseline !== undefined ? newBaseline : baseline;
+    const fore = newForecast !== undefined ? newForecast : forecast;
+
+    if (newBaseline !== undefined) setBaseline(newBaseline);
+    if (newForecast !== undefined) setForecast(newForecast);
 
     const newStaffing = { ...staffing };
     Object.keys(newStaffing).forEach(role => {
@@ -172,7 +178,7 @@ const StaffingPlanner: FC = () => {
         role,
         newStaffing[role].shifts,
         newStaffing[role].onHand,
-        newVolume / 100
+        fore / base
       );
       newStaffing[role] = {
         ...newStaffing[role],
@@ -283,7 +289,7 @@ const StaffingPlanner: FC = () => {
 
         <Card sx={{ mb: 3, boxShadow: 3, border: '2px solid #4a9eff' }}>
           <CardHeader
-            title="Volume Control"
+            title="Sales Forecast"
             sx={{
               backgroundColor: '#4a9eff',
               color: 'white',
@@ -295,48 +301,52 @@ const StaffingPlanner: FC = () => {
           />
           <CardContent>
             <Grid container spacing={3} alignItems="center">
-              <Grid item xs={12} md={8}>
-                <Typography gutterBottom sx={{ mb: 2, fontWeight: 'bold' }}>
-                  Volume Multiplier: {volume}%
-                  {volume > 100 && <Chip label="BUSY" color="error" size="small" sx={{ ml: 1 }} />}
-                  {volume < 100 && <Chip label="SLOW" color="info" size="small" sx={{ ml: 1 }} />}
-                  {volume === 100 && <Chip label="NORMAL" color="success" size="small" sx={{ ml: 1 }} />}
-                </Typography>
-                <Slider
-                  value={volume}
-                  onChange={(_, value) => handleVolumeChange(value as number)}
-                  min={25}
-                  max={200}
-                  step={5}
-                  marks={[
-                    { value: 25, label: '25%' },
-                    { value: 50, label: '50%' },
-                    { value: 100, label: '100%' },
-                    { value: 150, label: '150%' },
-                    { value: 200, label: '200%' }
-                  ]}
-                  valueLabelDisplay="auto"
-                  sx={{
-                    color: volume > 100 ? '#d32f2f' : volume < 100 ? '#0288d1' : '#2e7d32',
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={5}>
                 <TextField
-                  label="Custom Volume %"
+                  label="Baseline Weekly Sales (Normal)"
                   type="number"
-                  value={volume}
+                  value={baseline}
                   onChange={(e) => {
                     const val = parseInt(e.target.value);
-                    if (!isNaN(val) && val >= 25 && val <= 200) {
-                      handleVolumeChange(val);
+                    if (!isNaN(val) && val > 0) {
+                      handleForecastChange(val, undefined);
                     }
                   }}
                   fullWidth
                   InputProps={{
-                    inputProps: { min: 25, max: 200, step: 5 }
+                    startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                    inputProps: { min: 0, step: 1000 }
                   }}
                 />
+              </Grid>
+              <Grid item xs={12} md={5}>
+                <TextField
+                  label="Forecasted Weekly Sales"
+                  type="number"
+                  value={forecast}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                      handleForecastChange(undefined, val);
+                    }
+                  }}
+                  fullWidth
+                  InputProps={{
+                    startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                    inputProps: { min: 0, step: 1000 }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <Paper sx={{ p: 2, textAlign: 'center', backgroundColor: '#e3f2fd' }}>
+                  <Typography variant="body2" color="textSecondary">Ratio</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                    {Math.round((forecast / baseline) * 100)}%
+                  </Typography>
+                  {forecast / baseline > 1.1 && <Chip label="BUSY" color="error" size="small" sx={{ mt: 1 }} />}
+                  {forecast / baseline < 0.9 && <Chip label="SLOW" color="info" size="small" sx={{ mt: 1 }} />}
+                  {forecast / baseline >= 0.9 && forecast / baseline <= 1.1 && <Chip label="NORMAL" color="success" size="small" sx={{ mt: 1 }} />}
+                </Paper>
               </Grid>
             </Grid>
           </CardContent>

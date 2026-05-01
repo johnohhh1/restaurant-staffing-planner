@@ -10,7 +10,9 @@ export type StaffingState = {
 
 export type AppState = {
   staffing: StaffingState;
-  volume: number;
+  volume?: number; // deprecated, kept for backwards compatibility
+  baseline?: number;
+  forecast?: number;
 };
 
 const STAFFING_STORAGE_KEY = 'staffingData';
