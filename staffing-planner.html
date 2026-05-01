@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staffing Planner - Chili's</title>
+    <title>Woods Area Staffing Planner</title>
     <style>
         * {
             margin: 0;
@@ -229,6 +229,25 @@
         .badge-warning { background: rgba(251, 188, 4, 0.2); color: var(--warning); }
         .badge-danger { background: rgba(234, 67, 53, 0.2); color: var(--danger); }
 
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .footer a:hover {
+            opacity: 0.7;
+        }
+
         @media (max-width: 768px) {
             table { font-size: 12px; }
             th, td { padding: 6px 4px; }
@@ -240,7 +259,7 @@
     <div class="container">
         <div class="card header">
             <div>
-                <h1>📊 Staffing Planner</h1>
+                <h1>📊 Woods Area Staffing Planner</h1>
                 <div style="color: var(--text-dim); font-size: 14px;">
                     <span id="locationName">Select Location</span> • <span id="currentDate"></span>
                 </div>
@@ -310,6 +329,11 @@
                     <tbody id="staffTable"></tbody>
                 </table>
             </div>
+        </div>
+
+        <div class="footer">
+            Copyright © 2026 John Olenski • <a href="https://johnohhh1.dev" target="_blank">johnohhh1.dev</a>
+            <br><span style="font-size: 11px; opacity: 0.7;">For authorized use only. Redistribution prohibited without permission.</span>
         </div>
     </div>
 

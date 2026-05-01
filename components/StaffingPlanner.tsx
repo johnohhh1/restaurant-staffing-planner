@@ -233,6 +233,14 @@ const StaffingPlanner: FC = () => {
         minHeight: '100vh'
       }}>
         <Card sx={{ mb: 3, boxShadow: 3 }}>
+          <CardHeader
+            title="📊 Woods Area Staffing Planner"
+            sx={{
+              backgroundColor: darkMode ? '#1a1f2e' : '#f5f5f5',
+              borderBottom: '1px solid',
+              borderColor: 'divider'
+            }}
+          />
           <CardContent>
             <Grid container spacing={2} alignItems="center">
               <Grid item xs={12} md={3}>
@@ -462,6 +470,29 @@ const StaffingPlanner: FC = () => {
             </Card>
           </Grid>
         </Grid>
+
+        <Box sx={{
+          textAlign: 'center',
+          padding: '30px 20px',
+          mt: 5,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          color: 'text.secondary',
+          fontSize: '13px'
+        }}>
+          Copyright © 2026 John Olenski •{' '}
+          <Typography component="a" href="https://johnohhh1.dev" target="_blank" sx={{
+            color: 'primary.main',
+            textDecoration: 'none',
+            '&:hover': { opacity: 0.7 }
+          }}>
+            johnohhh1.dev
+          </Typography>
+          <br />
+          <Typography sx={{ fontSize: '11px', opacity: 0.7, mt: 0.5 }}>
+            For authorized use only. Redistribution prohibited without permission.
+          </Typography>
+        </Box>
       </Box>
     </ThemeProvider>
   );
