@@ -57,6 +57,8 @@
             justify-content: space-between;
             align-items: center;
             border: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         h1 {
@@ -64,12 +66,14 @@
             font-weight: 600;
         }
 
-        .location-info {
-            color: var(--text-secondary);
-            font-size: 14px;
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
-        .theme-toggle {
+        select, button {
             background: var(--bg-card);
             border: 1px solid var(--border);
             color: var(--text-primary);
@@ -80,7 +84,7 @@
             transition: all 0.2s;
         }
 
-        .theme-toggle:hover {
+        button:hover, select:hover {
             background: var(--hover);
         }
 
@@ -166,13 +170,15 @@
         .table-container {
             background: var(--bg-secondary);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
             border: 1px solid var(--border);
+            margin-bottom: 20px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 1000px;
         }
 
         thead {
@@ -268,6 +274,63 @@
             margin-top: 8px;
         }
 
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid var(--border);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+
         @media (max-width: 768px) {
             .summary-cards {
                 grid-template-columns: 1fr;
@@ -288,9 +351,16 @@
         <header>
             <div>
                 <h1>🎯 Sales-Driven Staffing Calculator</h1>
-                <div class="location-info">Chili's Auburn Hills (605) • Week of <span id="weekDate"></span></div>
             </div>
-            <button class="theme-toggle" onclick="toggleTheme()">☀️ Toggle Light Mode</button>
+            <div class="header-controls">
+                <select id="locationSelect" onchange="loadLocation()">
+                    <option value="">+ New Location</option>
+                </select>
+                <button onclick="saveLocation()">💾 Save Location</button>
+                <button onclick="showExportModal()">📤 Export</button>
+                <button onclick="showImportModal()">📥 Import</button>
+                <button onclick="toggleTheme()">☀️ Theme</button>
+            </div>
         </header>
 
         <div class="summary-cards">
@@ -325,8 +395,12 @@
             <div class="section-title">📊 Sales Forecast & Labor Targets</div>
             <div class="input-grid">
                 <div class="input-group">
+                    <label>Location Name</label>
+                    <input type="text" id="locationName" placeholder="e.g., Auburn Hills (605)">
+                </div>
+                <div class="input-group">
                     <label>Weekly Sales Projection</label>
-                    <input type="number" id="weeklySales" value="117100" onchange="calculate()">
+                    <input type="number" id="weeklySales" value="100000" onchange="calculate()">
                 </div>
                 <div class="input-group">
                     <label>FOH Labor % Target</label>
@@ -344,45 +418,83 @@
             </div>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Position</th>
-                        <th>Avg Wage</th>
-                        <th>Target SPLH</th>
-                        <th>Optimal Hrs</th>
-                        <th>Scheduled Hrs</th>
-                        <th>Labor Cost</th>
-                        <th>Actual SPLH</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="staffingTable">
-                </tbody>
-            </table>
+        <div class="input-section">
+            <div class="section-title">👥 Position Configuration</div>
+            <p class="help-text" style="margin-bottom: 15px;">
+                Edit wages, target SPLH, and base hours directly in the table below. All values are editable and will be saved with your location profile.
+            </p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Avg Wage ($/hr)</th>
+                            <th>Target SPLH</th>
+                            <th>Base Hours/Week</th>
+                            <th>Optimal Hrs</th>
+                            <th>Scheduled Hrs</th>
+                            <th>Labor Cost</th>
+                            <th>Actual SPLH</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffingTable">
+                    </tbody>
+                </table>
+            </div>
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="addPosition('FOH')">+ Add FOH Position</button>
+                <button class="btn-primary" onclick="addPosition('HOH')">+ Add HOH Position</button>
+                <button class="btn-danger" onclick="if(confirm('Reset to default positions?')) resetPositions()">🔄 Reset to Defaults</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <h2>Export Location Data</h2>
+            <p class="help-text">Copy this JSON to backup or share your location configuration:</p>
+            <textarea id="exportData" readonly></textarea>
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="copyExport()">📋 Copy to Clipboard</button>
+                <button onclick="closeModal('exportModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <h2>Import Location Data</h2>
+            <p class="help-text">Paste JSON data from a previous export:</p>
+            <textarea id="importData" placeholder='{"locationName": "...", "positions": {...}}'></textarea>
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="importData()">📥 Import</button>
+                <button onclick="closeModal('importModal')">Cancel</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Position data based on HotSchedules reports
-        const positions = {
+        let positions = {
+            FOH: [],
+            HOH: []
+        };
+
+        const defaultPositions = {
             FOH: [
-                { name: 'Bartender 1', wage: 5.67, targetSPLH: 1540, baseHours: 76 },
-                { name: 'Bartender 2', wage: 5.49, targetSPLH: 4182, baseHours: 28 },
-                { name: 'Busser 1', wage: 5.49, targetSPLH: 2440, baseHours: 48 },
-                { name: 'Busser 2', wage: 16.00, targetSPLH: 1446, baseHours: 81 },
-                { name: 'FOH Expeditor', wage: 21.00, targetSPLH: 2169, baseHours: 54 },
-                { name: 'Food Runner', wage: 5.35, targetSPLH: 527, baseHours: 222 },
-                { name: 'Server 1', wage: 5.49, targetSPLH: 301, baseHours: 389 },
-                { name: 'Server 2', wage: 5.49, targetSPLH: 5576, baseHours: 21 },
-                { name: 'Host', wage: 15.80, targetSPLH: 1220, baseHours: 96 },
-                { name: 'To-Go', wage: 16.17, targetSPLH: 1154, baseHours: 101.5 }
+                { name: 'Bartender', wage: 5.67, targetSPLH: 1500, baseHours: 75 },
+                { name: 'Busser', wage: 11.00, targetSPLH: 2000, baseHours: 130 },
+                { name: 'Food Runner', wage: 5.35, targetSPLH: 500, baseHours: 220 },
+                { name: 'Server', wage: 5.49, targetSPLH: 300, baseHours: 410 },
+                { name: 'Host', wage: 15.80, targetSPLH: 1200, baseHours: 95 },
+                { name: 'To-Go', wage: 16.17, targetSPLH: 1150, baseHours: 100 }
             ],
             HOH: [
-                { name: 'Cook', wage: 21.09, targetSPLH: 254, baseHours: 461.5 },
-                { name: 'Dishwasher', wage: 18.82, targetSPLH: 1748, baseHours: 67 },
-                { name: 'BOH Trainee', wage: 13.73, targetSPLH: 7807, baseHours: 15 }
+                { name: 'Cook', wage: 21.09, targetSPLH: 250, baseHours: 460 },
+                { name: 'Dishwasher', wage: 18.82, targetSPLH: 1750, baseHours: 65 }
             ]
         };
 
@@ -409,17 +521,14 @@
             const hohTarget = parseFloat(document.getElementById('hohTarget').value) / 100 || 0.096;
             const volumeMult = parseFloat(document.getElementById('volumeMultiplier').value) || 1.0;
 
-            const fohBudget = weeklySales * fohTarget;
-            const hohBudget = weeklySales * hohTarget;
-
             let fohHours = 0, fohCost = 0, hohHours = 0, hohCost = 0;
             const tbody = document.getElementById('staffingTable');
             tbody.innerHTML = '';
 
             // FOH Section
-            tbody.innerHTML += `<tr class="category-header"><td colspan="8">FRONT OF HOUSE</td></tr>`;
+            tbody.innerHTML += `<tr class="category-header"><td colspan="10">FRONT OF HOUSE</td></tr>`;
 
-            positions.FOH.forEach(pos => {
+            positions.FOH.forEach((pos, idx) => {
                 const optimalHours = (weeklySales / pos.targetSPLH) * volumeMult;
                 const scheduledHours = pos.baseHours * volumeMult;
                 const laborCost = scheduledHours * pos.wage;
@@ -432,14 +541,18 @@
                 tbody.innerHTML += `
                     <tr>
                         <td class="position-name">${pos.name}</td>
-                        <td>${formatCurrency(pos.wage)}/hr</td>
-                        <td>${formatCurrency(pos.targetSPLH)}</td>
+                        <td><input type="number" class="editable-cell" value="${pos.wage.toFixed(2)}"
+                            onchange="updatePosition('FOH', ${idx}, 'wage', this.value)"></td>
+                        <td><input type="number" class="editable-cell" value="${pos.targetSPLH}"
+                            onchange="updatePosition('FOH', ${idx}, 'targetSPLH', this.value)"></td>
+                        <td><input type="number" class="editable-cell" value="${pos.baseHours}"
+                            onchange="updatePosition('FOH', ${idx}, 'baseHours', this.value)"></td>
                         <td>${optimalHours.toFixed(1)}</td>
-                        <td><input type="number" class="editable-cell" value="${scheduledHours.toFixed(1)}"
-                            onchange="updateScheduled('${pos.name}', this.value)"></td>
+                        <td>${scheduledHours.toFixed(1)}</td>
                         <td>${formatCurrency(laborCost)}</td>
                         <td>${formatCurrency(actualSPLH)}</td>
                         <td><span class="status-badge status-${status.class}">${status.text}</span></td>
+                        <td><button onclick="deletePosition('FOH', ${idx})" style="padding: 4px 8px; font-size: 12px;">🗑️</button></td>
                     </tr>
                 `;
             });
@@ -450,18 +563,20 @@
                     <td><strong>FOH Total</strong></td>
                     <td>-</td>
                     <td>-</td>
-                    <td><strong>${(weeklySales / fohTarget / 1).toFixed(0)}</strong></td>
+                    <td>-</td>
+                    <td><strong>${(fohHours / volumeMult).toFixed(0)}</strong></td>
                     <td><strong>${fohHours.toFixed(1)}</strong></td>
                     <td><strong>${formatCurrency(fohCost)}</strong></td>
                     <td><strong>${formatCurrency(weeklySales / fohHours)}</strong></td>
                     <td><strong>${formatPercent(fohPercent)}</strong></td>
+                    <td>-</td>
                 </tr>
             `;
 
             // HOH Section
-            tbody.innerHTML += `<tr class="category-header"><td colspan="8">HEART OF HOUSE</td></tr>`;
+            tbody.innerHTML += `<tr class="category-header"><td colspan="10">HEART OF HOUSE</td></tr>`;
 
-            positions.HOH.forEach(pos => {
+            positions.HOH.forEach((pos, idx) => {
                 const optimalHours = (weeklySales / pos.targetSPLH) * volumeMult;
                 const scheduledHours = pos.baseHours * volumeMult;
                 const laborCost = scheduledHours * pos.wage;
@@ -474,14 +589,18 @@
                 tbody.innerHTML += `
                     <tr>
                         <td class="position-name">${pos.name}</td>
-                        <td>${formatCurrency(pos.wage)}/hr</td>
-                        <td>${formatCurrency(pos.targetSPLH)}</td>
+                        <td><input type="number" class="editable-cell" value="${pos.wage.toFixed(2)}"
+                            onchange="updatePosition('HOH', ${idx}, 'wage', this.value)"></td>
+                        <td><input type="number" class="editable-cell" value="${pos.targetSPLH}"
+                            onchange="updatePosition('HOH', ${idx}, 'targetSPLH', this.value)"></td>
+                        <td><input type="number" class="editable-cell" value="${pos.baseHours}"
+                            onchange="updatePosition('HOH', ${idx}, 'baseHours', this.value)"></td>
                         <td>${optimalHours.toFixed(1)}</td>
-                        <td><input type="number" class="editable-cell" value="${scheduledHours.toFixed(1)}"
-                            onchange="updateScheduled('${pos.name}', this.value)"></td>
+                        <td>${scheduledHours.toFixed(1)}</td>
                         <td>${formatCurrency(laborCost)}</td>
                         <td>${formatCurrency(actualSPLH)}</td>
                         <td><span class="status-badge status-${status.class}">${status.text}</span></td>
+                        <td><button onclick="deletePosition('HOH', ${idx})" style="padding: 4px 8px; font-size: 12px;">🗑️</button></td>
                     </tr>
                 `;
             });
@@ -492,11 +611,13 @@
                     <td><strong>HOH Total</strong></td>
                     <td>-</td>
                     <td>-</td>
-                    <td><strong>${(weeklySales / hohTarget / 1).toFixed(0)}</strong></td>
+                    <td>-</td>
+                    <td><strong>${(hohHours / volumeMult).toFixed(0)}</strong></td>
                     <td><strong>${hohHours.toFixed(1)}</strong></td>
                     <td><strong>${formatCurrency(hohCost)}</strong></td>
                     <td><strong>${formatCurrency(weeklySales / hohHours)}</strong></td>
                     <td><strong>${formatPercent(hohPercent)}</strong></td>
+                    <td>-</td>
                 </tr>
             `;
 
@@ -512,10 +633,12 @@
                     <td>-</td>
                     <td>-</td>
                     <td>-</td>
+                    <td>-</td>
                     <td><strong>${totalHours.toFixed(1)}</strong></td>
                     <td><strong>${formatCurrency(totalCost)}</strong></td>
                     <td><strong>${formatCurrency(overallSPLH)}</strong></td>
                     <td><strong>${formatPercent(totalPercent)}</strong></td>
+                    <td>-</td>
                 </tr>
             `;
 
@@ -539,35 +662,146 @@
             document.getElementById('budgetStatus').innerHTML = statusHTML;
         }
 
-        function updateScheduled(posName, hours) {
-            // Find and update the position's base hours
-            for (let category in positions) {
-                const pos = positions[category].find(p => p.name === posName);
-                if (pos) {
-                    const volumeMult = parseFloat(document.getElementById('volumeMultiplier').value) || 1.0;
-                    pos.baseHours = parseFloat(hours) / volumeMult;
-                    calculate();
-                    break;
-                }
+        function updatePosition(category, idx, field, value) {
+            positions[category][idx][field] = parseFloat(value);
+            calculate();
+        }
+
+        function deletePosition(category, idx) {
+            if (confirm(`Delete ${positions[category][idx].name}?`)) {
+                positions[category].splice(idx, 1);
+                calculate();
+            }
+        }
+
+        function addPosition(category) {
+            const name = prompt(`Enter position name for ${category}:`);
+            if (name) {
+                positions[category].push({
+                    name: name,
+                    wage: 15.00,
+                    targetSPLH: 1000,
+                    baseHours: 40
+                });
+                calculate();
+            }
+        }
+
+        function resetPositions() {
+            positions = JSON.parse(JSON.stringify(defaultPositions));
+            calculate();
+        }
+
+        function saveLocation() {
+            const locationName = document.getElementById('locationName').value.trim();
+            if (!locationName) {
+                alert('Please enter a location name first!');
+                return;
+            }
+
+            const data = {
+                locationName: locationName,
+                weeklySales: document.getElementById('weeklySales').value,
+                fohTarget: document.getElementById('fohTarget').value,
+                hohTarget: document.getElementById('hohTarget').value,
+                positions: positions
+            };
+
+            const locations = JSON.parse(localStorage.getItem('staffingLocations') || '{}');
+            locations[locationName] = data;
+            localStorage.setItem('staffingLocations', JSON.stringify(locations));
+
+            loadLocationList();
+            alert(`Saved: ${locationName}`);
+        }
+
+        function loadLocation() {
+            const locationName = document.getElementById('locationSelect').value;
+            if (!locationName) {
+                document.getElementById('locationName').value = '';
+                resetPositions();
+                return;
+            }
+
+            const locations = JSON.parse(localStorage.getItem('staffingLocations') || '{}');
+            const data = locations[locationName];
+
+            if (data) {
+                document.getElementById('locationName').value = data.locationName;
+                document.getElementById('weeklySales').value = data.weeklySales;
+                document.getElementById('fohTarget').value = data.fohTarget;
+                document.getElementById('hohTarget').value = data.hohTarget;
+                positions = data.positions;
+                calculate();
+            }
+        }
+
+        function loadLocationList() {
+            const locations = JSON.parse(localStorage.getItem('staffingLocations') || '{}');
+            const select = document.getElementById('locationSelect');
+            select.innerHTML = '<option value="">+ New Location</option>';
+
+            Object.keys(locations).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            });
+        }
+
+        function showExportModal() {
+            const data = {
+                locationName: document.getElementById('locationName').value,
+                weeklySales: document.getElementById('weeklySales').value,
+                fohTarget: document.getElementById('fohTarget').value,
+                hohTarget: document.getElementById('hohTarget').value,
+                positions: positions
+            };
+
+            document.getElementById('exportData').value = JSON.stringify(data, null, 2);
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function showImportModal() {
+            document.getElementById('importModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function copyExport() {
+            const text = document.getElementById('exportData');
+            text.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
+        }
+
+        function importData() {
+            try {
+                const data = JSON.parse(document.getElementById('importData').value);
+                document.getElementById('locationName').value = data.locationName || '';
+                document.getElementById('weeklySales').value = data.weeklySales || 100000;
+                document.getElementById('fohTarget').value = data.fohTarget || 8.5;
+                document.getElementById('hohTarget').value = data.hohTarget || 9.6;
+                positions = data.positions || defaultPositions;
+                calculate();
+                closeModal('importModal');
+                alert('Data imported successfully!');
+            } catch (e) {
+                alert('Invalid JSON data. Please check the format.');
             }
         }
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
-            const btn = document.querySelector('.theme-toggle');
-            btn.textContent = document.body.classList.contains('light-mode') ? '🌙 Toggle Dark Mode' : '☀️ Toggle Light Mode';
-        }
-
-        // Set current week
-        function setWeekDate() {
-            const today = new Date();
-            const options = { month: 'short', day: 'numeric', year: 'numeric' };
-            document.getElementById('weekDate').textContent = today.toLocaleDateString('en-US', options);
+            const btn = event.target;
+            btn.textContent = document.body.classList.contains('light-mode') ? '🌙 Theme' : '☀️ Theme';
         }
 
         // Initialize
-        setWeekDate();
-        calculate();
+        resetPositions();
+        loadLocationList();
     </script>
 </body>
 </html>
