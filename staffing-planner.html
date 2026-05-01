@@ -195,13 +195,34 @@
         }
 
         .day-input {
-            width: 60px;
-            padding: 6px;
+            width: 45px;
+            padding: 6px 4px;
             text-align: center;
             background: var(--bg);
             border: 1px solid var(--border);
             color: var(--text);
             border-radius: 4px;
+            font-size: 13px;
+        }
+
+        /* Remove number input spinners */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .day-cell {
+            padding: 4px !important;
+        }
+
+        .shift-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .onhand-input {
@@ -317,18 +338,34 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Position</th>
-                            <th>Mon</th>
-                            <th>Tue</th>
-                            <th>Wed</th>
-                            <th>Thu</th>
-                            <th>Fri</th>
-                            <th>Sat</th>
-                            <th>Sun</th>
-                            <th>Total</th>
-                            <th>On Hand</th>
-                            <th>Needed</th>
-                            <th>To Hire</th>
+                            <th rowspan="2" style="vertical-align: middle;">Position</th>
+                            <th colspan="2">Mon</th>
+                            <th colspan="2">Tue</th>
+                            <th colspan="2">Wed</th>
+                            <th colspan="2">Thu</th>
+                            <th colspan="2">Fri</th>
+                            <th colspan="2">Sat</th>
+                            <th colspan="2">Sun</th>
+                            <th rowspan="2" style="vertical-align: middle;">Total</th>
+                            <th rowspan="2" style="vertical-align: middle;">On Hand</th>
+                            <th rowspan="2" style="vertical-align: middle;">Needed</th>
+                            <th rowspan="2" style="vertical-align: middle;">To Hire</th>
+                        </tr>
+                        <tr>
+                            <th style="font-size: 10px;">L</th>
+                            <th style="font-size: 10px;">D</th>
+                            <th style="font-size: 10px;">L</th>
+                            <th style="font-size: 10px;">D</th>
+                            <th style="font-size: 10px;">L</th>
+                            <th style="font-size: 10px;">D</th>
+                            <th style="font-size: 10px;">L</th>
+                            <th style="font-size: 10px;">D</th>
+                            <th style="font-size: 10px;">L</th>
+                            <th style="font-size: 10px;">D</th>
+                            <th style="font-size: 10px;">L</th>
+                            <th style="font-size: 10px;">D</th>
+                            <th style="font-size: 10px;">L</th>
+                            <th style="font-size: 10px;">D</th>
                         </tr>
                     </thead>
                     <tbody id="staffTable"></tbody>
@@ -362,7 +399,15 @@
         function init() {
             positions.forEach(pos => {
                 staffData[pos.name] = {
-                    shifts: { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 },
+                    shifts: {
+                        Mon: { lunch: 0, dinner: 0 },
+                        Tue: { lunch: 0, dinner: 0 },
+                        Wed: { lunch: 0, dinner: 0 },
+                        Thu: { lunch: 0, dinner: 0 },
+                        Fri: { lunch: 0, dinner: 0 },
+                        Sat: { lunch: 0, dinner: 0 },
+                        Sun: { lunch: 0, dinner: 0 }
+                    },
                     onHand: 0
                 };
             });
@@ -381,10 +426,15 @@
                 row.innerHTML = `
                     <td><strong>${pos.name}</strong></td>
                     ${days.map(day => `
-                        <td>
-                            <input type="number" class="day-input" min="0"
-                                value="${staffData[pos.name].shifts[day]}"
-                                onchange="updateShift('${pos.name}', '${day}', this.value)">
+                        <td class="day-cell">
+                            <input type="number" class="day-input" min="0" placeholder="L"
+                                value="${staffData[pos.name].shifts[day].lunch}"
+                                onchange="updateShift('${pos.name}', '${day}', 'lunch', this.value)">
+                        </td>
+                        <td class="day-cell">
+                            <input type="number" class="day-input" min="0" placeholder="D"
+                                value="${staffData[pos.name].shifts[day].dinner}"
+                                onchange="updateShift('${pos.name}', '${day}', 'dinner', this.value)">
                         </td>
                     `).join('')}
                     <td><strong id="${pos.name}-total">0</strong></td>
@@ -400,8 +450,8 @@
             });
         }
 
-        function updateShift(position, day, value) {
-            staffData[position].shifts[day] = parseInt(value) || 0;
+        function updateShift(position, day, shift, value) {
+            staffData[position].shifts[day][shift] = parseInt(value) || 0;
             calc();
         }
 
@@ -426,7 +476,9 @@
             let totalNeeded = 0, totalOnHand = 0, totalHire = 0;
 
             positions.forEach(pos => {
-                const total = Object.values(staffData[pos.name].shifts).reduce((a, b) => a + b, 0);
+                const total = Object.values(staffData[pos.name].shifts).reduce((sum, dayShifts) => {
+                    return sum + dayShifts.lunch + dayShifts.dinner;
+                }, 0);
                 const needed = Math.round((total / pos.divisor * volume) * 10) / 10;
                 const onHand = staffData[pos.name].onHand;
                 const hire = Math.max(0, Math.round((needed - onHand) * 10) / 10);
@@ -518,16 +570,18 @@
             const forecast = parseInt(document.getElementById('forecast').value) || 100000;
             const volume = forecast / baseline;
 
-            let csv = `Position,Mon,Tue,Wed,Thu,Fri,Sat,Sun,Total,On Hand,Needed,To Hire\n`;
+            let csv = `Position,Mon L,Mon D,Tue L,Tue D,Wed L,Wed D,Thu L,Thu D,Fri L,Fri D,Sat L,Sat D,Sun L,Sun D,Total,On Hand,Needed,To Hire\n`;
             csv += `Forecast: $${forecast.toLocaleString()}, Baseline: $${baseline.toLocaleString()}, Ratio: ${(volume * 100).toFixed(0)}%\n`;
 
             positions.forEach(pos => {
-                const total = Object.values(staffData[pos.name].shifts).reduce((a, b) => a + b, 0);
+                const total = Object.values(staffData[pos.name].shifts).reduce((sum, dayShifts) => {
+                    return sum + dayShifts.lunch + dayShifts.dinner;
+                }, 0);
                 const needed = Math.round((total / pos.divisor * volume) * 10) / 10;
                 const hire = Math.max(0, Math.round((needed - staffData[pos.name].onHand) * 10) / 10);
 
                 csv += `${pos.name},`;
-                csv += days.map(d => staffData[pos.name].shifts[d]).join(',');
+                csv += days.map(d => `${staffData[pos.name].shifts[d].lunch},${staffData[pos.name].shifts[d].dinner}`).join(',');
                 csv += `,${total},${staffData[pos.name].onHand},${needed},${hire}\n`;
             });
 

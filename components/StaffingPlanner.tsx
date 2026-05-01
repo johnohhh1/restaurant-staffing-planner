@@ -232,6 +232,16 @@ const StaffingPlanner: FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <style>{`
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
       <Box sx={{
         maxWidth: 1600,
         margin: '0 auto',
@@ -396,14 +406,22 @@ const StaffingPlanner: FC = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ backgroundColor: 'primary.main' }}>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Position</TableCell>
+                    <TableCell rowSpan={2} sx={{ fontWeight: 'bold', color: 'white', verticalAlign: 'middle' }}>Position</TableCell>
                     {daysOfWeek.map(day => (
-                      <TableCell key={day} sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.75rem' }}>{day}</TableCell>
+                      <TableCell key={day} colSpan={2} sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.75rem', textAlign: 'center' }}>{day}</TableCell>
                     ))}
-                    <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Total Shifts</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>On Hand</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Needed</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>To Hire</TableCell>
+                    <TableCell rowSpan={2} sx={{ fontWeight: 'bold', color: 'white', verticalAlign: 'middle' }}>Total</TableCell>
+                    <TableCell rowSpan={2} sx={{ fontWeight: 'bold', color: 'white', verticalAlign: 'middle' }}>On Hand</TableCell>
+                    <TableCell rowSpan={2} sx={{ fontWeight: 'bold', color: 'white', verticalAlign: 'middle' }}>Needed</TableCell>
+                    <TableCell rowSpan={2} sx={{ fontWeight: 'bold', color: 'white', verticalAlign: 'middle' }}>To Hire</TableCell>
+                  </TableRow>
+                  <TableRow sx={{ backgroundColor: 'primary.main' }}>
+                    {daysOfWeek.map(day => (
+                      <React.Fragment key={day}>
+                        <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.65rem', padding: '4px', textAlign: 'center' }}>L</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.65rem', padding: '4px', textAlign: 'center' }}>D</TableCell>
+                      </React.Fragment>
+                    ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -411,22 +429,34 @@ const StaffingPlanner: FC = () => {
                     <TableRow key={role} hover>
                       <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>{role}</TableCell>
                       {daysOfWeek.map(day => (
-                        <TableCell key={day} sx={{ padding: '4px' }}>
-                          <TextField
-                            type="number"
-                            size="small"
-                            value={staffing[role].shifts[day].lunch + staffing[role].shifts[day].dinner}
-                            onChange={(e) => {
-                              const total = parseInt(e.target.value) || 0;
-                              handleShiftChange(role, day, 'lunch', String(total));
-                              handleShiftChange(role, day, 'dinner', '0');
-                            }}
-                            sx={{ width: 60 }}
-                            InputProps={{
-                              inputProps: { min: 0, style: { textAlign: 'center', padding: '6px' } }
-                            }}
-                          />
-                        </TableCell>
+                        <React.Fragment key={day}>
+                          <TableCell sx={{ padding: '4px' }}>
+                            <TextField
+                              type="number"
+                              size="small"
+                              placeholder="L"
+                              value={staffing[role].shifts[day].lunch}
+                              onChange={(e) => handleShiftChange(role, day, 'lunch', e.target.value)}
+                              sx={{ width: 50 }}
+                              InputProps={{
+                                inputProps: { min: 0, style: { textAlign: 'center', padding: '4px', fontSize: '13px' } }
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ padding: '4px' }}>
+                            <TextField
+                              type="number"
+                              size="small"
+                              placeholder="D"
+                              value={staffing[role].shifts[day].dinner}
+                              onChange={(e) => handleShiftChange(role, day, 'dinner', e.target.value)}
+                              sx={{ width: 50 }}
+                              InputProps={{
+                                inputProps: { min: 0, style: { textAlign: 'center', padding: '4px', fontSize: '13px' } }
+                              }}
+                            />
+                          </TableCell>
+                        </React.Fragment>
                       ))}
                       <TableCell sx={{ fontWeight: 'bold' }}>{staffing[role].totalShifts}</TableCell>
                       <TableCell>
