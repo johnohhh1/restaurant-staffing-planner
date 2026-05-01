@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staffing Planner - Chili's</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0f1419;
+            --card: #1a1f2e;
+            --border: #3d4556;
+            --text: #e8eaed;
+            --text-dim: #9aa0a6;
+            --accent: #4a9eff;
+            --success: #34a853;
+            --warning: #fbbc04;
+            --danger: #ea4335;
+        }
+
+        body.light {
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --border: #e0e0e0;
+            --text: #202124;
+            --text-dim: #5f6368;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        select, button, input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        button {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        input {
+            width: 100%;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .stat-sub {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            background: var(--accent);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover {
+            background: var(--bg);
+        }
+
+        .day-input {
+            width: 60px;
+            padding: 6px;
+            text-align: center;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+        }
+
+        .onhand-input {
+            width: 70px;
+            padding: 6px;
+            text-align: center;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+        }
+
+        .success { color: var(--success); }
+        .danger { color: var(--danger); }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success { background: rgba(52, 168, 83, 0.2); color: var(--success); }
+        .badge-warning { background: rgba(251, 188, 4, 0.2); color: var(--warning); }
+        .badge-danger { background: rgba(234, 67, 53, 0.2); color: var(--danger); }
+
+        @media (max-width: 768px) {
+            table { font-size: 12px; }
+            th, td { padding: 6px 4px; }
+            .day-input { width: 50px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card header">
+            <div>
+                <h1>📊 Staffing Planner</h1>
+                <div style="color: var(--text-dim); font-size: 14px;">
+                    <span id="locationName">Select Location</span> • <span id="currentDate"></span>
+                </div>
+            </div>
+            <div class="controls">
+                <select id="location" onchange="loadLocation()">
+                    <option value="">Select Location...</option>
+                </select>
+                <button onclick="saveLocation()">💾 Save</button>
+                <button onclick="exportCSV()">📥 Export</button>
+                <button onclick="toggleTheme()">☀️ Theme</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Total Needed</div>
+                <div class="stat-value" id="totalNeeded">0</div>
+                <div class="stat-sub">Team Members</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">On Hand</div>
+                <div class="stat-value" id="totalOnHand">0</div>
+                <div class="stat-sub">Current Staff</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">To Hire</div>
+                <div class="stat-value" id="totalHire">0</div>
+                <div class="stat-sub">Hiring Needs</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Volume Multiplier: <span id="volumeValue">100</span>% <span id="volumeBadge"></span></h2>
+            <div class="slider-container">
+                <input type="range" id="volume" class="slider" min="25" max="200" step="5" value="100" oninput="calc()">
+                <div style="display: flex; justify-content: space-between; color: var(--text-dim); font-size: 12px; margin-top: 8px;">
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                    <span>150%</span>
+                    <span>200%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Weekly Shift Planning - All Positions</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Mon</th>
+                            <th>Tue</th>
+                            <th>Wed</th>
+                            <th>Thu</th>
+                            <th>Fri</th>
+                            <th>Sat</th>
+                            <th>Sun</th>
+                            <th>Total</th>
+                            <th>On Hand</th>
+                            <th>Needed</th>
+                            <th>To Hire</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const positions = [
+            { name: 'Server', divisor: 4.5 },
+            { name: 'Bartender', divisor: 4.0 },
+            { name: 'Host', divisor: 4.5 },
+            { name: 'Busser', divisor: 4.0 },
+            { name: 'Runner', divisor: 4.0 },
+            { name: 'Togo', divisor: 4.0 },
+            { name: 'QA', divisor: 4.0 },
+            { name: 'Cook', divisor: 4.0 },
+            { name: 'Dishwasher', divisor: 4.0 },
+            { name: 'Night Cleaner', divisor: 4.5 }
+        ];
+
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        let staffData = {};
+
+        function init() {
+            positions.forEach(pos => {
+                staffData[pos.name] = {
+                    shifts: { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 },
+                    onHand: 0
+                };
+            });
+            loadLocationList();
+            renderTable();
+            calc();
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('staffTable');
+            tbody.innerHTML = '';
+
+            positions.forEach(pos => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${pos.name}</strong></td>
+                    ${days.map(day => `
+                        <td>
+                            <input type="number" class="day-input" min="0"
+                                value="${staffData[pos.name].shifts[day]}"
+                                onchange="updateShift('${pos.name}', '${day}', this.value)">
+                        </td>
+                    `).join('')}
+                    <td><strong id="${pos.name}-total">0</strong></td>
+                    <td>
+                        <input type="number" class="onhand-input" min="0"
+                            value="${staffData[pos.name].onHand}"
+                            onchange="updateOnHand('${pos.name}', this.value)">
+                    </td>
+                    <td><strong id="${pos.name}-needed" style="color: var(--accent)">0</strong></td>
+                    <td><strong id="${pos.name}-hire">0</strong></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateShift(position, day, value) {
+            staffData[position].shifts[day] = parseInt(value) || 0;
+            calc();
+        }
+
+        function updateOnHand(position, value) {
+            staffData[position].onHand = parseInt(value) || 0;
+            calc();
+        }
+
+        function calc() {
+            const volume = parseInt(document.getElementById('volume').value) / 100;
+            document.getElementById('volumeValue').textContent = Math.round(volume * 100);
+
+            let badge = '';
+            if (volume > 1) badge = '<span class="badge badge-danger">BUSY</span>';
+            else if (volume < 1) badge = '<span class="badge badge-warning">SLOW</span>';
+            else badge = '<span class="badge badge-success">NORMAL</span>';
+            document.getElementById('volumeBadge').innerHTML = badge;
+
+            let totalNeeded = 0, totalOnHand = 0, totalHire = 0;
+
+            positions.forEach(pos => {
+                const total = Object.values(staffData[pos.name].shifts).reduce((a, b) => a + b, 0);
+                const needed = Math.round((total / pos.divisor * volume) * 10) / 10;
+                const onHand = staffData[pos.name].onHand;
+                const hire = Math.max(0, Math.round((needed - onHand) * 10) / 10);
+
+                document.getElementById(`${pos.name}-total`).textContent = total;
+                document.getElementById(`${pos.name}-needed`).textContent = needed.toFixed(1);
+
+                const hireCell = document.getElementById(`${pos.name}-hire`);
+                hireCell.textContent = hire > 0 ? hire.toFixed(1) : '✓';
+                hireCell.className = hire > 0 ? 'danger' : 'success';
+
+                totalNeeded += needed;
+                totalOnHand += onHand;
+                totalHire += hire;
+            });
+
+            document.getElementById('totalNeeded').textContent = totalNeeded.toFixed(1);
+            document.getElementById('totalOnHand').textContent = totalOnHand;
+            document.getElementById('totalHire').textContent = totalHire > 0 ? totalHire.toFixed(1) : '✓';
+            document.getElementById('totalHire').className = 'stat-value ' + (totalHire > 0 ? 'danger' : 'success');
+        }
+
+        function saveLocation() {
+            const name = prompt('Enter location name (e.g., Auburn Hills):');
+            if (!name) return;
+
+            const data = {
+                name,
+                staffData,
+                volume: document.getElementById('volume').value
+            };
+
+            const locations = JSON.parse(localStorage.getItem('staffingLocations') || '{}');
+            locations[name] = data;
+            localStorage.setItem('staffingLocations', JSON.stringify(locations));
+            loadLocationList();
+            document.getElementById('locationName').textContent = name;
+            alert('Saved: ' + name);
+        }
+
+        function loadLocation() {
+            const name = document.getElementById('location').value;
+            if (!name) return;
+
+            const locations = JSON.parse(localStorage.getItem('staffingLocations') || '{}');
+            const data = locations[name];
+
+            if (data) {
+                staffData = data.staffData;
+                document.getElementById('volume').value = data.volume || 100;
+                document.getElementById('locationName').textContent = data.name;
+                renderTable();
+                calc();
+            }
+        }
+
+        function loadLocationList() {
+            const locations = JSON.parse(localStorage.getItem('staffingLocations') || '{}');
+            const select = document.getElementById('location');
+            select.innerHTML = '<option value="">Select Location...</option>';
+
+            Object.keys(locations).forEach(name => {
+                select.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+        }
+
+        function exportCSV() {
+            let csv = 'Position,Mon,Tue,Wed,Thu,Fri,Sat,Sun,Total,On Hand,Needed,To Hire\n';
+
+            positions.forEach(pos => {
+                const total = Object.values(staffData[pos.name].shifts).reduce((a, b) => a + b, 0);
+                const volume = parseInt(document.getElementById('volume').value) / 100;
+                const needed = Math.round((total / pos.divisor * volume) * 10) / 10;
+                const hire = Math.max(0, Math.round((needed - staffData[pos.name].onHand) * 10) / 10);
+
+                csv += `${pos.name},`;
+                csv += days.map(d => staffData[pos.name].shifts[d]).join(',');
+                csv += `,${total},${staffData[pos.name].onHand},${needed},${hire}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `staffing-plan-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+        }
+
+        init();
+    </script>
+</body>
+</html>
